@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  nexus-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    container_name: nexus-session-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - CLIENT_ORIGIN=http://localhost:5173
+      - HOST_SECRET=nexus-instructor-secret-classroom-2026
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nexus-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    container_name: nexus-web-client
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - nexus-server

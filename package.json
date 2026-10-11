@@ -1,0 +1,22 @@
+{
+  "name": "nexus-network-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NEXUS — Distributed Network Lab: 3D collaborative network protocol simulation",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@nexus/web",
+    "dev:server": "npm run dev --workspace=@nexus/server",
+    "build": "npm run build --workspace=@nexus/shared && npm run build --workspace=@nexus/server && npm run build --workspace=@nexus/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "npm run typecheck --workspace=@nexus/shared && npm run typecheck --workspace=@nexus/server && npm run typecheck --workspace=@nexus/web"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
+  }
+}
