@@ -42,18 +42,18 @@ export const NetworkEdge3D: React.FC<NetworkEdge3DProps> = ({
   // Visual styling according to state language
   const { color, opacity, isDashed, lineWidth } = useMemo(() => {
     if (!edge.online || visualState === 'failed') {
-      return { color: '#ef4444', opacity: 0.35, isDashed: true, lineWidth: 1.5 };
+      return { color: '#B93838', opacity: 0.45, isDashed: true, lineWidth: 1.5 };
     }
     switch (visualState) {
       case 'forwarding':
-        return { color: '#10b981', opacity: 0.95, isDashed: false, lineWidth: 3.5 };
+        return { color: '#2D6A4F', opacity: 0.95, isDashed: false, lineWidth: 3.5 };
       case 'blocked':
-        return { color: '#f43f5e', opacity: 0.85, isDashed: true, lineWidth: 2.0 };
+        return { color: '#A83232', opacity: 0.85, isDashed: true, lineWidth: 2.0 };
       case 'transitioning':
-        return { color: '#f59e0b', opacity: 0.75, isDashed: true, lineWidth: 2.5 };
+        return { color: '#B45309', opacity: 0.8, isDashed: true, lineWidth: 2.5 };
       case 'candidate':
       default:
-        return { color: '#475569', opacity: 0.45, isDashed: false, lineWidth: 1.2 };
+        return { color: '#A78D78', opacity: 0.6, isDashed: false, lineWidth: 1.5 };
     }
   }, [visualState, edge.online]);
 
@@ -76,12 +76,12 @@ export const NetworkEdge3D: React.FC<NetworkEdge3DProps> = ({
       <Html position={[midPoint.x, midPoint.y, midPoint.z]} center pointerEvents="none">
         <div className="flex items-center gap-1 select-none pointer-events-none">
           {visualState === 'blocked' && (
-            <span className="px-1 py-0.2 bg-rose-950/90 text-rose-300 border border-rose-500 rounded text-[10px] font-mono font-bold shadow">
+            <span className="px-1 py-0.2 bg-rose-950/90 text-rose-300 border border-rose-500 rounded text-[10px] font-mono font-bold shadow-sm">
               BLK
             </span>
           )}
           {showCost && (
-            <span className="px-1.5 py-0.2 bg-slate-900/80 text-slate-300 border border-slate-700 rounded text-[10px] font-mono">
+            <span className="px-1.5 py-0.2 bg-slate-900/90 text-slate-300 border border-slate-700 rounded text-[10px] font-mono shadow-sm">
               w:{edge.cost}
             </span>
           )}

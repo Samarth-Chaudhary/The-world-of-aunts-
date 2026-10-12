@@ -16,13 +16,13 @@ export const NetworkFloor: React.FC = () => {
     <group position={[0, 0, -0.05]}>
       {/* Primary perspective grid rotated into XY plane */}
       <gridHelper
-        args={[36, 36, '#0284c7', '#0f2942']}
+        args={[36, 36, '#A78D78', '#D8CEBF']}
         rotation={[Math.PI / 2, 0, 0]}
       />
 
       {/* Planar boundary frame */}
       <lineSegments geometry={boundaryGeometry}>
-        <lineBasicMaterial color="#1e3a5f" transparent opacity={0.6} />
+        <lineBasicMaterial color="#A78D78" transparent opacity={0.5} />
       </lineSegments>
     </group>
   );

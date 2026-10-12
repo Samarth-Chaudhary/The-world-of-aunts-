@@ -64,6 +64,17 @@ export const LeftPanel: React.FC = () => {
                   <span className={`w-2 h-2 rounded-full ${
                     node.online ? 'bg-emerald-400' : 'bg-rose-500'
                   }`} />
+                  <img
+                    src={
+                      node.role === 'gateway'
+                        ? '/assets/server_base.png'
+                        : node.role === 'endpoint'
+                        ? '/assets/client_host.png'
+                        : '/assets/router.png'
+                    }
+                    alt=""
+                    className="w-4 h-4 object-contain"
+                  />
                   <span className="font-mono text-xs font-bold text-slate-200">
                     {node.name}
                   </span>
@@ -71,13 +82,13 @@ export const LeftPanel: React.FC = () => {
                 <select
                   value={node.role}
                   onChange={e => setNodeRole(node.id, e.target.value as any)}
-                  className="text-[10px] font-mono px-1.5 py-0.5 rounded uppercase font-semibold bg-slate-950 border border-slate-700 text-cyan-300 focus:outline-none"
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold bg-slate-950 border border-slate-700 text-cyan-300 focus:outline-none"
                   title="Assign Device Role"
                 >
-                  <option value="gateway">Gateway</option>
-                  <option value="bridge">Bridge</option>
+                  <option value="gateway">Base Station</option>
                   <option value="router">Router</option>
-                  <option value="endpoint">Host</option>
+                  <option value="bridge">Bridge</option>
+                  <option value="endpoint">Client Host</option>
                 </select>
               </div>
 

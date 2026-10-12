@@ -33,12 +33,12 @@ import {
 } from '@nexus/shared';
 
 const INITIAL_NODES: NetworkNode[] = [
-  { id: 'gw_1', name: 'Gateway-Core', role: 'gateway', x: 0, y: -2, radius: 5.5, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
-  { id: 'sw_1', name: 'Switch-Alpha', role: 'bridge', x: -4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:02' },
-  { id: 'sw_2', name: 'Switch-Beta', role: 'bridge', x: 4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:03' },
-  { id: 'sw_3', name: 'Switch-Gamma', role: 'bridge', x: 0, y: 6.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:04' },
-  { id: 'ep_1', name: 'Host-Client', role: 'endpoint', x: -7.0, y: -1.0, radius: 4.0, online: true },
-  { id: 'ep_2', name: 'Host-Server', role: 'endpoint', x: 7.0, y: -1.0, radius: 4.0, online: true }
+  { id: 'gw_1', name: 'Server-Base', role: 'gateway', x: 0, y: -2, radius: 5.5, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
+  { id: 'r_1', name: 'Router-Alpha', role: 'router', x: -4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:02' },
+  { id: 'r_2', name: 'Router-Beta', role: 'router', x: 4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:03' },
+  { id: 'r_3', name: 'Router-Gamma', role: 'router', x: 0, y: 6.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:04' },
+  { id: 'ep_1', name: 'Client-Host-1', role: 'endpoint', x: -7.0, y: -1.0, radius: 4.0, online: true },
+  { id: 'ep_2', name: 'Client-Host-Final', role: 'endpoint', x: 7.0, y: -1.0, radius: 4.0, online: true }
 ];
 
 interface NetworkStoreState {

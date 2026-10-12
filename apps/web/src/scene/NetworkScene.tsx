@@ -33,13 +33,13 @@ const CameraController: React.FC<CameraControllerProps> = ({ preset }) => {
 
   React.useEffect(() => {
     if (preset === 'top') {
-      camera.position.set(0, -0.01, 24);
+      camera.position.set(0, -0.01, 20);
       camera.lookAt(0, 0, 0);
     } else if (preset === 'side') {
-      camera.position.set(16, -14, 12);
+      camera.position.set(14, -12, 10);
       camera.lookAt(0, 0, 0);
     } else {
-      camera.position.set(0, -18, 18);
+      camera.position.set(0, -15, 15);
       camera.lookAt(0, 0, 0);
     }
   }, [preset, camera]);
@@ -105,16 +105,16 @@ export const NetworkScene: React.FC = () => {
   return (
     <div className="w-full h-full relative bg-slate-950 overflow-hidden select-none">
       <Canvas
-        camera={{ position: [0, -18, 18], fov: 45, up: [0, 0, 1] }}
+        camera={{ position: [0, -15, 15], fov: 42, up: [0, 0, 1] }}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
       >
-        <color attach="background" args={['#070a10']} />
-        <fog attach="fog" args={['#070a10', 25, 65]} />
+        <color attach="background" args={['#EAE2D5']} />
+        <fog attach="fog" args={['#EAE2D5', 25, 65]} />
 
-        {/* Ambient & directional lighting */}
-        <ambientLight intensity={0.65} />
-        <directionalLight position={[10, 10, 20]} intensity={1.1} />
-        <pointLight position={[0, 0, 12]} intensity={0.5} />
+        {/* Ambient & directional lighting with warm tint */}
+        <ambientLight intensity={0.95} color="#FFFDF7" />
+        <directionalLight position={[10, 10, 20]} intensity={1.25} color="#FFFFFF" />
+        <pointLight position={[0, 0, 12]} intensity={0.4} color="#FFFDF7" />
 
         <CameraController preset={cameraPreset} />
 

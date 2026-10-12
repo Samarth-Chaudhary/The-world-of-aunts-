@@ -1,15 +1,20 @@
 /**
  * @file scene/NetworkNode3D.tsx
- * @description 3D Network Node component with proximity ring, role meshes,
- * selection glow, and interactive pointer dragging.
+ * @description 3D Network Node component using custom high-fidelity 3D models:
+ * Image 1: Wi-Fi Router (role: router / bridge)
+ * Image 2: Client Server Base / Cell Tower (role: gateway)
+ * Image 3: Client Host mascot (role: endpoint / target destination)
  */
 
 import React, { useRef, useState, useMemo } from 'react';
-import { ThreeEvent, useThree, useFrame } from '@react-three/fiber';
+import { ThreeEvent, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { NetworkNode } from '@nexus/shared';
 import { useNetworkStore } from '../state/networkStore';
+import { Router3DModel } from './models/Router3DModel';
+import { ServerBase3DModel } from './models/ServerBase3DModel';
+import { ClientHost3DModel } from './models/ClientHost3DModel';
 
 interface NetworkNode3DProps {
   node: NetworkNode;
@@ -25,9 +30,8 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
   isRoot
 }) => {
   const meshRef = useRef<THREE.Group>(null);
-  const roleMeshRef = useRef<THREE.Mesh>(null);
-  const { selectNode, moveNode, reducedMotion } = useNetworkStore();
-  const { camera, raycaster, gl } = useThree();
+  const { selectNode, moveNode } = useNetworkStore();
+  const { camera, raycaster } = useThree();
 
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -37,22 +41,13 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
     return new THREE.RingGeometry(node.radius - 0.05, node.radius + 0.05, 64);
   }, [node.radius]);
 
-  // Mesh color and shape depending on role and status
-  const roleColors = useMemo(() => {
-    if (!node.online) return { base: '#475569', emissive: '#1e293b' };
-    switch (node.role) {
-      case 'gateway':
-        return { base: '#38bdf8', emissive: '#0284c7' };
-      case 'bridge':
-        return { base: '#10b981', emissive: '#059669' };
-      case 'router':
-        return { base: '#f59e0b', emissive: '#d97706' };
-      case 'endpoint':
-        return { base: '#818cf8', emissive: '#4f46e5' };
-      default:
-        return { base: '#94a3b8', emissive: '#334155' };
-    }
-  }, [node.role, node.online]);
+  // Accent color for auras
+  const auraColor = useMemo(() => {
+    if (!node.online) return '#A78D78';
+    if (node.role === 'gateway') return '#6E473B';
+    if (node.role === 'endpoint') return isTarget ? '#9E4338' : '#8C7360';
+    return '#C07A48';
+  }, [node.role, node.online, isTarget]);
 
   // Pointer drag handling in XY plane (Z = 0)
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), []);
@@ -84,12 +79,6 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
     }
   };
 
-  useFrame((_, delta) => {
-    if (!reducedMotion && roleMeshRef.current && (node.role === 'gateway' || isRoot)) {
-      roleMeshRef.current.rotation.z += delta * 0.7;
-    }
-  });
-
   return (
     <group
       ref={meshRef}
@@ -100,12 +89,12 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* 1. Simulated Proximity Ring */}
+      {/* 1. Proximity Wireless Aura Ring */}
       <mesh geometry={ringGeometry} position={[0, 0, -0.02]}>
         <meshBasicMaterial
-          color={roleColors.base}
+          color={auraColor}
           transparent
-          opacity={hovered || isSelected ? 0.35 : 0.15}
+          opacity={hovered || isSelected ? 0.35 : 0.18}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -113,78 +102,90 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
       {/* 2. Selection Ring Indicator */}
       {isSelected && (
         <mesh position={[0, 0, -0.01]}>
-          <ringGeometry args={[0.9, 1.15, 32]} />
-          <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} />
+          <ringGeometry args={[1.1, 1.35, 32]} />
+          <meshBasicMaterial color="#6E473B" side={THREE.DoubleSide} />
         </mesh>
       )}
 
-      {/* Target Marker */}
+      {/* Target Marker Ring */}
       {isTarget && (
         <mesh position={[0, 0, -0.01]}>
-          <ringGeometry args={[1.2, 1.4, 32]} />
-          <meshBasicMaterial color="#ec4899" side={THREE.DoubleSide} />
+          <ringGeometry args={[1.4, 1.65, 32]} />
+          <meshBasicMaterial color="#9E4338" side={THREE.DoubleSide} />
         </mesh>
       )}
 
       {/* Root Bridge Crown Marker */}
       {isRoot && (
-        <mesh position={[0, 0, 0.85]}>
-          <ringGeometry args={[0.3, 0.45, 24]} />
-          <meshBasicMaterial color="#10b981" side={THREE.DoubleSide} />
+        <mesh position={[0, 0, 0.05]}>
+          <ringGeometry args={[1.2, 1.35, 24]} />
+          <meshBasicMaterial color="#2D6A4F" side={THREE.DoubleSide} />
         </mesh>
       )}
 
-      {/* 3. Role-Specific 3D Geometry */}
-      {node.role === 'gateway' ? (
-        // Gateway: Octahedron / Diamond
-        <mesh ref={roleMeshRef} position={[0, 0, 0.4]} scale={0.7}>
-          <octahedronGeometry args={[1, 0]} />
-          <meshStandardMaterial
-            color={roleColors.base}
-            emissive={roleColors.emissive}
-            emissiveIntensity={isSelected ? 0.8 : 0.3}
-            roughness={0.2}
-            metalness={0.8}
+      {/* 3. Role-Specific High-Fidelity 3D Models */}
+      <group scale={1.25}>
+        {node.role === 'gateway' ? (
+          // Client Server Base (Cell Tower / Base Station - Image 2)
+          <ServerBase3DModel
+            isSelected={isSelected}
+            hovered={hovered}
+            online={node.online}
+            isRoot={isRoot}
           />
-        </mesh>
-      ) : node.role === 'bridge' ? (
-        // Bridge: Rounded Cube / Cylinder
-        <mesh ref={roleMeshRef} position={[0, 0, 0.3]} scale={0.65}>
-          <boxGeometry args={[1, 1, 0.8]} />
-          <meshStandardMaterial
-            color={roleColors.base}
-            emissive={roleColors.emissive}
-            emissiveIntensity={isSelected ? 0.8 : 0.3}
-            roughness={0.3}
-            metalness={0.7}
+        ) : node.role === 'endpoint' ? (
+          // Client Host (Furry Creature Mascot / Destination - Image 3)
+          <ClientHost3DModel
+            isSelected={isSelected}
+            isTarget={isTarget}
+            hovered={hovered}
+            online={node.online}
           />
-        </mesh>
-      ) : (
-        // Endpoint / Host: Sphere
-        <mesh position={[0, 0, 0.3]} scale={0.55}>
-          <sphereGeometry args={[1, 32, 24]} />
-          <meshStandardMaterial
-            color={roleColors.base}
-            emissive={roleColors.emissive}
-            emissiveIntensity={isSelected ? 0.8 : 0.3}
-            roughness={0.4}
-            metalness={0.5}
+        ) : (
+          // Routers (Wi-Fi Router with dual antennas & glowing button - Image 1)
+          <Router3DModel
+            isSelected={isSelected}
+            hovered={hovered}
+            online={node.online}
           />
-        </mesh>
-      )}
+        )}
+      </group>
 
       {/* 4. DOM Label Overlay */}
-      <Html position={[0, -1.0, 0]} center pointerEvents="none">
-        <div className={`px-2 py-0.5 rounded text-xs font-mono font-medium whitespace-nowrap shadow select-none ${
+      <Html position={[0, -1.35, 0]} center pointerEvents="none">
+        <div className={`px-2.5 py-1 rounded text-xs font-mono font-medium whitespace-nowrap shadow select-none flex items-center gap-1.5 transition-all ${
           !node.online
             ? 'bg-slate-900/90 text-slate-500 border border-slate-700 line-through'
             : isSelected
-            ? 'bg-cyan-950/90 text-cyan-200 border border-cyan-400 font-bold'
-            : 'bg-slate-900/80 text-slate-200 border border-slate-800'
+            ? 'bg-cyan-950/95 text-cyan-200 border border-cyan-400 font-bold scale-105'
+            : 'bg-slate-900/85 text-slate-200 border border-slate-800'
         }`}>
-          {node.name}
-          {isRoot && <span className="ml-1 text-emerald-400 font-bold">[ROOT]</span>}
-          {isTarget && <span className="ml-1 text-pink-400 font-bold">[TARGET]</span>}
+          {/* Role Thumbnail / Icon Badge */}
+          <img
+            src={
+              node.role === 'gateway'
+                ? '/assets/server_base.png'
+                : node.role === 'endpoint'
+                ? '/assets/client_host.png'
+                : '/assets/router.png'
+            }
+            alt=""
+            className="w-4 h-4 object-contain"
+          />
+
+          <span>{node.name}</span>
+
+          {isRoot && (
+            <span className="text-[10px] bg-emerald-900/80 text-emerald-300 px-1 py-0.5 rounded font-bold border border-emerald-600">
+              ROOT
+            </span>
+          )}
+
+          {isTarget && (
+            <span className="text-[10px] bg-pink-900/80 text-pink-300 px-1 py-0.5 rounded font-bold border border-pink-600 animate-pulse">
+              DESTINATION
+            </span>
+          )}
         </div>
       </Html>
     </group>

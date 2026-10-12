@@ -145,7 +145,7 @@ export const StudentView: React.FC = () => {
           <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1 font-mono text-xs">
             <div className="flex justify-between">
               <span className="text-slate-400">Node Identifier:</span>
-              <span className="text-white font-bold">{myNode.id}</span>
+              <span className="text-slate-100 font-bold">{myNode.id}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Classroom Nickname:</span>

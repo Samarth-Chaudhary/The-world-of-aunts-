@@ -37,7 +37,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ sessionCode, isOpen, o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#291C0E]/35 backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full shadow-2xl overflow-hidden font-mono text-slate-200">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950/70">
@@ -69,12 +69,14 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ sessionCode, isOpen, o
           </div>
 
           {/* Rendered SVG QR Code */}
-          <div className="p-3 bg-white rounded-xl shadow-lg border border-slate-200 flex items-center justify-center">
+          <div className="p-3 bg-slate-950 rounded-xl shadow border border-slate-700 flex items-center justify-center">
             <QRCodeSVG
               value={joinUrl}
               size={210}
               level="M"
               includeMargin={true}
+              fgColor="#291C0E"
+              bgColor="#FAF7F2"
             />
           </div>
 

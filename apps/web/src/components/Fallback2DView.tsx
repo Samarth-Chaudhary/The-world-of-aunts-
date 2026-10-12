@@ -11,6 +11,7 @@ export const Fallback2DView: React.FC = () => {
   const {
     nodes,
     edges,
+    packets,
     selectedNodeId,
     targetEndpointId,
     rootPinnedId,
@@ -61,33 +62,33 @@ export const Fallback2DView: React.FC = () => {
       const isForwarding = stp.forwardingEdgeIds.includes(edgeId);
 
       if (isBlocked) {
-        return { stroke: '#f43f5e', strokeDasharray: '6,6', strokeWidth: 2, label: 'BLK' };
+        return { stroke: '#A83232', strokeDasharray: '6,6', strokeWidth: 2, label: 'BLK' };
       }
       if (isForwarding) {
-        return { stroke: '#10b981', strokeDasharray: 'none', strokeWidth: 3, label: 'FWD' };
+        return { stroke: '#2D6A4F', strokeDasharray: 'none', strokeWidth: 3, label: 'FWD' };
       }
     }
 
     if (algorithmMode === 'DIJKSTRA' && activeResult) {
       const dij = activeResult as DijkstraResult;
       if (dij.pathEdgeIds.includes(edgeId)) {
-        return { stroke: '#06b6d4', strokeDasharray: 'none', strokeWidth: 3.5, label: 'PATH' };
+        return { stroke: '#6E473B', strokeDasharray: 'none', strokeWidth: 3.5, label: 'PATH' };
       }
     }
 
     if (algorithmMode === 'MST' && activeResult) {
       const mst = activeResult as MSTResult;
       if (mst.selectedEdgeIds.includes(edgeId)) {
-        return { stroke: '#38bdf8', strokeDasharray: 'none', strokeWidth: 3, label: 'MST' };
+        return { stroke: '#8C5A48', strokeDasharray: 'none', strokeWidth: 3, label: 'MST' };
       }
     }
 
-    return { stroke: '#475569', strokeDasharray: '3,3', strokeWidth: 1.5, label: '' };
+    return { stroke: '#BEB5A9', strokeDasharray: '3,3', strokeWidth: 1.5, label: '' };
   };
 
   return (
     <div className="relative w-full h-full bg-slate-950 flex flex-col items-center justify-center overflow-hidden select-none">
-      <div className="absolute top-3 left-3 bg-slate-900/90 border border-slate-700 px-2.5 py-1 rounded text-xs font-mono text-cyan-300 z-10">
+      <div className="absolute top-3 left-3 bg-slate-900/90 border border-slate-700 px-2.5 py-1 rounded text-xs font-mono text-cyan-300 z-10 shadow-sm">
         2D Fallback Mode (Accessible SVG Network Plane)
       </div>
 
@@ -101,7 +102,7 @@ export const Fallback2DView: React.FC = () => {
         {/* Subtle Background Grid */}
         <defs>
           <pattern id="grid2d" width="40" height="40" patternUnits="userSpace">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" strokeWidth="0.8" />
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#D8CEBF" strokeWidth="0.8" />
           </pattern>
         </defs>
         <rect width="800" height="600" fill="url(#grid2d)" />
@@ -118,8 +119,8 @@ export const Fallback2DView: React.FC = () => {
               cx={cx}
               cy={cy}
               r={r}
-              fill="rgba(6, 182, 212, 0.04)"
-              stroke="rgba(6, 182, 212, 0.2)"
+              fill="rgba(167, 141, 120, 0.08)"
+              stroke="rgba(167, 141, 120, 0.4)"
               strokeDasharray="4,4"
               strokeWidth="1"
             />
@@ -159,7 +160,7 @@ export const Fallback2DView: React.FC = () => {
                 width="36"
                 height="18"
                 rx="4"
-                fill="#0f172a"
+                fill="#FAF7F2"
                 stroke={style.stroke}
                 strokeWidth="1"
               />
@@ -167,7 +168,7 @@ export const Fallback2DView: React.FC = () => {
                 x={midX}
                 y={midY + 3.5}
                 textAnchor="middle"
-                fill="#cbd5e1"
+                fill="#291C0E"
                 fontSize="10"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -178,7 +179,40 @@ export const Fallback2DView: React.FC = () => {
           );
         })}
 
-        {/* Nodes */}
+        {/* In-Flight 2D Packets (Image 4) */}
+        {packets.map((pkt) => {
+          if (pkt.status !== 'in_transit') return null;
+          const u = pkt.route[pkt.currentHopIndex];
+          const v = pkt.route[pkt.currentHopIndex + 1];
+          const nodeU = nodes.find((n) => n.id === u);
+          const nodeV = nodes.find((n) => n.id === v);
+          if (!nodeU || !nodeV) return null;
+
+          const t = Math.max(0, Math.min(1, pkt.progress));
+          const px = toSvgX(nodeU.x + (nodeV.x - nodeU.x) * t);
+          const py = toSvgY(nodeU.y + (nodeV.y - nodeU.y) * t);
+
+          return (
+            <g key={`2d-pkt-${pkt.id}`}>
+              <circle
+                cx={px}
+                cy={py}
+                r="18"
+                fill={pkt.isDuplicate ? 'rgba(245, 158, 11, 0.3)' : 'rgba(56, 189, 248, 0.3)'}
+              />
+              <image
+                href="/assets/packet.png"
+                x={px - 16}
+                y={py - 16}
+                width="32"
+                height="32"
+                className="pointer-events-none drop-shadow"
+              />
+            </g>
+          );
+        })}
+
+        {/* Nodes (Image 1 Router, Image 2 Server Base, Image 3 Client Host) */}
         {nodes.map((node) => {
           const cx = toSvgX(node.x);
           const cy = toSvgY(node.y);
@@ -186,12 +220,12 @@ export const Fallback2DView: React.FC = () => {
           const isTarget = node.id === targetEndpointId;
           const isPinnedRoot = node.id === rootPinnedId;
 
-          let nodeFill = '#38bdf8';
-          if (!node.online) nodeFill = '#64748b';
-          else if (node.role === 'gateway') nodeFill = '#06b6d4';
-          else if (node.role === 'bridge') nodeFill = '#10b981';
-          else if (node.role === 'router') nodeFill = '#f59e0b';
-          else nodeFill = '#818cf8';
+          const imgSrc =
+            node.role === 'gateway'
+              ? '/assets/server_base.png'
+              : node.role === 'endpoint'
+              ? '/assets/client_host.png'
+              : '/assets/router.png';
 
           return (
             <g
@@ -199,36 +233,62 @@ export const Fallback2DView: React.FC = () => {
               className="cursor-move"
               onPointerDown={(e) => handlePointerDown(node.id, e)}
             >
+              {/* Ground Glow Disk */}
+              <circle
+                cx={cx}
+                cy={cy}
+                r="26"
+                fill={
+                  node.role === 'gateway'
+                    ? 'rgba(110, 71, 59, 0.15)'
+                    : isTarget
+                    ? 'rgba(158, 67, 56, 0.18)'
+                    : 'rgba(167, 141, 120, 0.15)'
+                }
+              />
+
               {/* Selection Ring */}
               {isSelected && (
                 <circle
                   cx={cx}
                   cy={cy}
-                  r="26"
+                  r="30"
                   fill="none"
-                  stroke="#38bdf8"
+                  stroke="#6E473B"
                   strokeWidth="2.5"
                   strokeDasharray="4,2"
                 />
               )}
 
-              {/* Node Body */}
-              <circle
-                cx={cx}
-                cy={cy}
-                r="18"
-                fill={nodeFill}
-                stroke="#0f172a"
-                strokeWidth="3"
-                className="transition-transform hover:scale-110"
+              {/* Target Indicator Ring */}
+              {isTarget && (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r="34"
+                  fill="none"
+                  stroke="#9E4338"
+                  strokeWidth="2"
+                  strokeDasharray="3,3"
+                />
+              )}
+
+              {/* Node Image (Image 1, 2, or 3) */}
+              <image
+                href={imgSrc}
+                x={cx - 24}
+                y={cy - 24}
+                width="48"
+                height="48"
+                className="transition-transform hover:scale-110 pointer-events-none drop-shadow-sm"
               />
 
               {/* Node Label */}
               <text
                 x={cx}
-                y={cy + 32}
+                y={cy + 36}
                 textAnchor="middle"
-                fill="#f8fafc"
+                fill="#291C0E"
                 fontSize="11"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -240,9 +300,9 @@ export const Fallback2DView: React.FC = () => {
               {isPinnedRoot && (
                 <text
                   x={cx}
-                  y={cy - 24}
+                  y={cy - 28}
                   textAnchor="middle"
-                  fill="#f59e0b"
+                  fill="#6E473B"
                   fontSize="10"
                   fontFamily="monospace"
                   fontWeight="bold"
@@ -253,14 +313,14 @@ export const Fallback2DView: React.FC = () => {
               {isTarget && (
                 <text
                   x={cx}
-                  y={cy - 24}
+                  y={cy - 28}
                   textAnchor="middle"
-                  fill="#ec4899"
+                  fill="#9E4338"
                   fontSize="10"
                   fontFamily="monospace"
                   fontWeight="bold"
                 >
-                  [TARGET]
+                  [FINAL DESTINATION]
                 </text>
               )}
             </g>
