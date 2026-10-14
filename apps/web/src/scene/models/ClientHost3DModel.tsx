@@ -16,13 +16,15 @@ interface ClientHost3DModelProps {
   isTarget: boolean;
   hovered: boolean;
   online: boolean;
+  isOutOfRange?: boolean;
 }
 
 export const ClientHost3DModel: React.FC<ClientHost3DModelProps> = ({
   isSelected,
   isTarget,
   hovered,
-  online
+  online,
+  isOutOfRange = false
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const targetBeaconRef = useRef<THREE.Group>(null);
@@ -81,6 +83,31 @@ export const ClientHost3DModel: React.FC<ClientHost3DModelProps> = ({
           depthWrite={false}
         />
       </mesh>
+
+      {/* Out of Range Warning Ground Halo */}
+      {isOutOfRange && online && (
+        <group position={[0, 0, 0.03]}>
+          <mesh>
+            <ringGeometry args={[0.85, 1.08, 32]} />
+            <meshBasicMaterial
+              color="#DC2626"
+              transparent
+              opacity={0.8}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <mesh>
+            <ringGeometry args={[1.15, 1.25, 32]} />
+            <meshBasicMaterial
+              color="#F59E0B"
+              transparent
+              opacity={0.45}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <pointLight color="#EF4444" intensity={1.5} distance={3} position={[0, 0, 0.4]} />
+        </group>
+      )}
 
       {/* Target Destination Beacon Ring */}
       {isTarget && (

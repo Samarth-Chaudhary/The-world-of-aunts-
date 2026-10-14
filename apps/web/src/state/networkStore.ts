@@ -33,12 +33,12 @@ import {
 } from '@nexus/shared';
 
 const INITIAL_NODES: NetworkNode[] = [
-  { id: 'gw_1', name: 'Server-Base', role: 'gateway', x: 0, y: -2, radius: 5.5, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
+  { id: 'gw_1', name: 'Server-Base', role: 'gateway', x: 0, y: -2, radius: 4.0, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
   { id: 'r_1', name: 'Router-Alpha', role: 'router', x: -4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:02' },
   { id: 'r_2', name: 'Router-Beta', role: 'router', x: 4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:03' },
   { id: 'r_3', name: 'Router-Gamma', role: 'router', x: 0, y: 6.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:04' },
-  { id: 'ep_1', name: 'Client-Host-1', role: 'endpoint', x: -7.0, y: -1.0, radius: 4.0, online: true },
-  { id: 'ep_2', name: 'Client-Host-Final', role: 'endpoint', x: 7.0, y: -1.0, radius: 4.0, online: true }
+  { id: 'ep_1', name: 'Client-Host-1', role: 'endpoint', x: -8.0, y: 1.5, radius: 3.5, online: true },
+  { id: 'ep_2', name: 'Client-Host-Final', role: 'endpoint', x: 8.0, y: 1.5, radius: 3.5, online: true }
 ];
 
 interface NetworkStoreState {
@@ -118,39 +118,23 @@ const packetEngine = new PacketSimulationEngine();
 let lastMoveEmissionTime = 0;
 
 function runActiveAlgorithm(
-  mode: AlgorithmMode,
+  _mode: AlgorithmMode,
   nodes: NetworkNode[],
   edges: NetworkEdge[],
-  rootPinnedId: string | null,
+  _rootPinnedId: string | null,
   selectedNodeId: string | null,
   targetEndpointId: string | null,
   revision: number
 ): { result: AlgorithmResult; activeForwardingEdgesCount: number } {
-  if (mode === 'STP') {
-    const stp = computeSTP(nodes, edges, rootPinnedId, revision);
-    return { result: stp, activeForwardingEdgesCount: stp.forwardingEdgeIds.length };
-  }
-  if (mode === 'DIJKSTRA') {
-    const src = selectedNodeId || 'gw_1';
-    const tgt = targetEndpointId || 'ep_2';
-    const dij = computeDijkstra(nodes, edges, src, tgt, revision);
-    return { result: dij, activeForwardingEdgesCount: dij.pathEdgeIds.length };
-  }
-  if (mode === 'MST') {
-    const mst = computeMST(nodes, edges, revision);
-    return { result: mst, activeForwardingEdgesCount: mst.selectedEdgeIds.length };
-  }
-  if (mode === 'STORM') {
-    const storm = computeStormModel(nodes, edges, revision);
-    return { result: storm, activeForwardingEdgesCount: edges.filter(e => e.online).length };
-  }
-  const man = computeManualModel(nodes, edges, revision);
-  return { result: man, activeForwardingEdgesCount: edges.filter(e => e.online).length };
+  const src = selectedNodeId || 'ep_1';
+  const tgt = targetEndpointId || 'gw_1';
+  const dij = computeDijkstra(nodes, edges, src, tgt, revision);
+  return { result: dij, activeForwardingEdgesCount: dij.pathEdgeIds.length };
 }
 
 export const useNetworkStore = create<NetworkStoreState>((set, get) => {
   const initialEdges = buildCandidateGraph(INITIAL_NODES, 'distance');
-  const initialAlgo = runActiveAlgorithm('STP', INITIAL_NODES, initialEdges, null, 'gw_1', 'ep_2', 1);
+  const initialAlgo = runActiveAlgorithm('DIJKSTRA', INITIAL_NODES, initialEdges, null, 'ep_1', 'gw_1', 1);
   const initialMetrics = calculateGraphMetrics(INITIAL_NODES, initialEdges, initialAlgo.activeForwardingEdgesCount);
 
   return {
@@ -158,15 +142,15 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
     nodes: INITIAL_NODES,
     edges: initialEdges,
     costModel: 'distance',
-    algorithmMode: 'STP',
-    selectedNodeId: 'gw_1',
-    targetEndpointId: 'ep_2',
+    algorithmMode: 'DIJKSTRA',
+    selectedNodeId: 'ep_1',
+    targetEndpointId: 'gw_1',
     rootPinnedId: null,
     activeResult: initialAlgo.result,
     metrics: initialMetrics,
     eventLogs: [
-      { id: '1', timestamp: new Date().toLocaleTimeString(), message: 'NEXUS Network Lab initialized with standard 6-node test topology.', type: 'info' },
-      { id: '2', timestamp: new Date().toLocaleTimeString(), message: 'STP converged: elected Gateway-Core as Root Bridge.', type: 'success' }
+      { id: '1', timestamp: new Date().toLocaleTimeString(), message: 'NEXUS Network Lab initialized. Data flow source: Client-Host-1 (ep_1).', type: 'info' },
+      { id: '2', timestamp: new Date().toLocaleTimeString(), message: 'Dijkstra shortest path converged to Server-Base (gw_1).', type: 'success' }
     ],
 
     // Packet state
@@ -371,8 +355,15 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
     // =========================================================================
     sendSinglePacket: () => {
       const { selectedNodeId, targetEndpointId, activeResult, algorithmMode, nodes, edges } = get();
-      const src = selectedNodeId || 'gw_1';
-      const dst = targetEndpointId || 'ep_2';
+      const src = selectedNodeId || 'ep_1';
+      const dst = targetEndpointId || 'gw_1';
+
+      // Strict Rule: If no peer is within wireless transmission range, no data flow can occur!
+      const hasPeersInRange = edges.some(e => e.online && (e.sourceId === src || e.targetId === src));
+      if (!hasPeersInRange) {
+        get().addLog(`Data flow blocked: '${src}' has no peer nodes within wireless range.`, 'warn');
+        return;
+      }
 
       let route: string[] = [];
       let edgeIds: string[] = [];
@@ -384,13 +375,18 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
       } else {
         // Compute path via Dijkstra
         const dij = computeDijkstra(nodes, edges, src, dst);
-        if (dij.reachable) {
+        if (dij.reachable && dij.pathNodeIds.length >= 2) {
           route = dij.pathNodeIds;
           edgeIds = dij.pathEdgeIds;
         } else {
           get().addLog(`Packet send aborted: no valid route between ${src} and ${dst}.`, 'warn');
           return;
         }
+      }
+
+      if (route.length < 2) {
+        get().addLog(`Data flow blocked: route between ${src} and ${dst} is incomplete.`, 'warn');
+        return;
       }
 
       const pkt = packetEngine.sendPacket(src, dst, route, edgeIds);
@@ -407,11 +403,16 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
         set({ isContinuousPackets: false });
         get().addLog('Continuous packet generation stopped.', 'info');
       } else {
-        const src = get().selectedNodeId || 'gw_1';
-        const dst = get().targetEndpointId || 'ep_2';
+        const src = get().selectedNodeId || 'ep_1';
+        const dst = get().targetEndpointId || 'gw_1';
+        const hasPeersInRange = get().edges.some(e => e.online && (e.sourceId === src || e.targetId === src));
+        if (!hasPeersInRange) {
+          get().addLog(`Cannot stream packets: '${src}' has no peer nodes within wireless range.`, 'warn');
+          return;
+        }
         packetEngine.startContinuous(src, dst, get().packetRatePerSec);
         set({ isContinuousPackets: true });
-        get().addLog(`Continuous packet generation started at ${get().packetRatePerSec} pkts/sec.`, 'success');
+        get().addLog(`Continuous packet flow started from ${src} to ${dst} at ${get().packetRatePerSec} pkts/sec.`, 'success');
       }
     },
 
@@ -421,9 +422,20 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
     },
 
     stepSimulation: (deltaTimeMs) => {
-      const { nodes, edges, activeResult, selectedNodeId, targetEndpointId } = get();
-      const routeProvider = (src: string, dst: string) => {
-        const dij = computeDijkstra(nodes, edges, src, dst);
+      const { nodes, edges, activeResult, selectedNodeId, targetEndpointId, isContinuousPackets } = get();
+      const src = selectedNodeId || 'ep_1';
+      const dst = targetEndpointId || 'gw_1';
+      const hasPeersInRange = edges.some(e => e.online && (e.sourceId === src || e.targetId === src));
+
+      // If continuous stream is running but source moves out of range, halt immediately!
+      if (isContinuousPackets && !hasPeersInRange) {
+        packetEngine.stop();
+        set({ isContinuousPackets: false });
+        get().addLog(`Continuous data flow halted: '${src}' moved out of wireless range.`, 'warn');
+      }
+
+      const routeProvider = (srcId: string, dstId: string) => {
+        const dij = computeDijkstra(nodes, edges, srcId, dstId);
         return { route: dij.pathNodeIds, edgeIds: dij.pathEdgeIds };
       };
 
@@ -502,7 +514,7 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
     resetNetwork: () => {
       packetEngine.reset();
       const edges = buildCandidateGraph(INITIAL_NODES, 'distance');
-      const algo = runActiveAlgorithm('STP', INITIAL_NODES, edges, null, 'gw_1', 'ep_2', 1);
+      const algo = runActiveAlgorithm('DIJKSTRA', INITIAL_NODES, edges, null, 'ep_1', 'gw_1', 1);
       const metrics = calculateGraphMetrics(INITIAL_NODES, edges, algo.activeForwardingEdgesCount);
 
       set({
@@ -510,10 +522,10 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
         nodes: INITIAL_NODES,
         edges,
         costModel: 'distance',
-        algorithmMode: 'STP',
+        algorithmMode: 'DIJKSTRA',
         rootPinnedId: null,
-        selectedNodeId: 'gw_1',
-        targetEndpointId: 'ep_2',
+        selectedNodeId: 'ep_1',
+        targetEndpointId: 'gw_1',
         activeResult: algo.result,
         metrics,
         packets: [],
@@ -521,7 +533,7 @@ export const useNetworkStore = create<NetworkStoreState>((set, get) => {
         isContinuousPackets: false,
         revision: get().revision + 1
       });
-      get().addLog('Network topology reset to initial state.', 'info');
+      get().addLog('Network topology reset: data flow configured from Client-Host-1 (ep_1) to Server-Base (gw_1).', 'info');
     },
 
     resetEntireSession: () => {

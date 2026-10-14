@@ -56,12 +56,12 @@ export class SessionManager {
     const hostSecret = customHostSecret || crypto.randomBytes(16).toString('hex');
 
     const initialNodes: NetworkNode[] = [
-      { id: 'gw_1', name: 'Gateway-Core', role: 'gateway', x: 0, y: -2, radius: 5.5, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
+      { id: 'gw_1', name: 'Gateway-Core', role: 'gateway', x: 0, y: -2, radius: 4.0, online: true, bridgePriority: 4096, bridgeId: '00:0a:01' },
       { id: 'sw_1', name: 'Switch-Alpha', role: 'bridge', x: -4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:02' },
       { id: 'sw_2', name: 'Switch-Beta', role: 'bridge', x: 4.5, y: 2.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:03' },
       { id: 'sw_3', name: 'Switch-Gamma', role: 'bridge', x: 0, y: 6.5, radius: 5.0, online: true, bridgePriority: 32768, bridgeId: '00:0a:04' },
-      { id: 'ep_1', name: 'Host-Client', role: 'endpoint', x: -7.0, y: -1.0, radius: 4.0, online: true },
-      { id: 'ep_2', name: 'Host-Server', role: 'endpoint', x: 7.0, y: -1.0, radius: 4.0, online: true }
+      { id: 'ep_1', name: 'Host-Client', role: 'endpoint', x: -8.0, y: 1.5, radius: 3.5, online: true },
+      { id: 'ep_2', name: 'Host-Server', role: 'endpoint', x: 8.0, y: 1.5, radius: 3.5, online: true }
     ];
 
     const initialEdges = buildCandidateGraph(initialNodes, 'distance');
@@ -78,9 +78,9 @@ export class SessionManager {
         nodes: initialNodes,
         edges: initialEdges,
         costModel: 'distance',
-        algorithmMode: 'STP',
-        selectedNodeId: 'gw_1',
-        targetEndpointId: 'ep_2',
+        algorithmMode: 'DIJKSTRA',
+        selectedNodeId: 'ep_1',
+        targetEndpointId: 'gw_1',
         rootPinnedId: null,
         metrics: initialMetrics
       },

@@ -34,6 +34,9 @@ export const TopBar: React.FC = () => {
     isContinuousPackets,
     packetRatePerSec,
     activeScenarioId,
+    nodes,
+    edges,
+    selectedNodeId,
     setAlgorithmMode,
     setCostModel,
     setInstructorView,
@@ -50,6 +53,12 @@ export const TopBar: React.FC = () => {
 
   const [showResetMenu, setShowResetMenu] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+
+  const srcId = selectedNodeId || 'ep_1';
+  const sourceNode = nodes.find((n) => n.id === srcId);
+  const sourceHasPeersInRange = edges.some(
+    (e) => e.online && (e.sourceId === srcId || e.targetId === srcId)
+  );
 
   return (
     <>
@@ -116,21 +125,15 @@ export const TopBar: React.FC = () => {
 
       {/* Mode Controls */}
       <div className="flex items-center gap-1.5">
-        {/* Algorithm Mode Switcher */}
-        <div className="flex items-center gap-0.5 bg-slate-950 p-0.5 rounded border border-slate-800">
-          {(['STP', 'DIJKSTRA', 'MST', 'STORM', 'MANUAL'] as AlgorithmMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setAlgorithmMode(mode)}
-              className={`px-2 py-1 rounded text-xs font-mono font-medium transition-colors ${
-                algorithmMode === mode
-                  ? 'bg-cyan-600 text-white font-bold shadow'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
+        {/* Dijkstra Algorithm Active Badge */}
+        <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded border border-cyan-800/80 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-xs font-mono font-bold text-cyan-300">
+            Dijkstra Shortest Path
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-900/60 text-cyan-200 border border-cyan-700/60">
+            ACTIVE
+          </span>
         </div>
 
         {/* Cost Model */}
@@ -148,10 +151,29 @@ export const TopBar: React.FC = () => {
 
       {/* Packet Injection Controls */}
       <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded border border-slate-800">
+        {!sourceHasPeersInRange && (
+          <div
+            className="flex items-center gap-1 bg-rose-950/90 border border-rose-700/80 px-2 py-0.5 rounded text-[10px] font-mono text-rose-300 animate-pulse shadow-sm"
+            title={`${sourceNode?.name || 'Client Host 1'} is out of wireless range. Move closer to a router to allow data flow.`}
+          >
+            <WifiOff className="w-3 h-3 text-rose-400" />
+            <span className="hidden sm:inline">NO PEERS IN RANGE</span>
+          </div>
+        )}
+
         <button
           onClick={sendSinglePacket}
-          className="flex items-center gap-1 bg-cyan-700 hover:bg-cyan-600 text-white px-2 py-1 rounded text-xs font-mono font-semibold transition-colors"
-          title="Inject a Single Demonstration Packet"
+          disabled={!sourceHasPeersInRange}
+          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-semibold transition-colors ${
+            !sourceHasPeersInRange
+              ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed border border-slate-800'
+              : 'bg-cyan-700 hover:bg-cyan-600 text-white shadow-sm'
+          }`}
+          title={
+            !sourceHasPeersInRange
+              ? `Data flow blocked: ${sourceNode?.name || 'Client Host 1'} has no peers in transmission range`
+              : 'Inject a Single Demonstration Packet'
+          }
         >
           <Send className="w-3 h-3" />
           <span className="hidden md:inline">Send 1</span>
@@ -159,12 +181,21 @@ export const TopBar: React.FC = () => {
 
         <button
           onClick={toggleContinuousPackets}
+          disabled={!sourceHasPeersInRange && !isContinuousPackets}
           className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-semibold transition-colors ${
             isContinuousPackets
               ? 'bg-rose-700 hover:bg-rose-600 text-white animate-pulse'
+              : !sourceHasPeersInRange
+              ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed border border-slate-800'
               : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
           }`}
-          title={isContinuousPackets ? 'Stop Packet Generation' : 'Start Continuous Packet Flow'}
+          title={
+            isContinuousPackets
+              ? 'Stop Packet Generation'
+              : !sourceHasPeersInRange
+              ? `Data flow blocked: ${sourceNode?.name || 'Client Host 1'} has no peers in transmission range`
+              : 'Start Continuous Packet Flow'
+          }
         >
           {isContinuousPackets ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
           <span className="hidden md:inline">{isContinuousPackets ? 'Stop' : 'Stream'}</span>

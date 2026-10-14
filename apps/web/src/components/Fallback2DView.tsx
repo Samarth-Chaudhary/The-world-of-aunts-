@@ -54,36 +54,16 @@ export const Fallback2DView: React.FC = () => {
     }
   };
 
-  // Determine edge styling based on active algorithm
-  const getEdgeStyle = (edgeId: string, sourceId: string, targetId: string) => {
-    if (algorithmMode === 'STP' && activeResult) {
-      const stp = activeResult as STPResult;
-      const isBlocked = stp.blockedEdgeIds.includes(edgeId);
-      const isForwarding = stp.forwardingEdgeIds.includes(edgeId);
-
-      if (isBlocked) {
-        return { stroke: '#A83232', strokeDasharray: '6,6', strokeWidth: 2, label: 'BLK' };
-      }
-      if (isForwarding) {
-        return { stroke: '#2D6A4F', strokeDasharray: 'none', strokeWidth: 3, label: 'FWD' };
-      }
-    }
-
-    if (algorithmMode === 'DIJKSTRA' && activeResult) {
+  // Determine edge styling based on Dijkstra shortest path
+  const getEdgeStyle = (edgeId: string, _sourceId: string, _targetId: string) => {
+    if (activeResult) {
       const dij = activeResult as DijkstraResult;
-      if (dij.pathEdgeIds.includes(edgeId)) {
-        return { stroke: '#6E473B', strokeDasharray: 'none', strokeWidth: 3.5, label: 'PATH' };
+      if (dij.pathEdgeIds?.includes(edgeId)) {
+        return { stroke: '#06b6d4', strokeDasharray: 'none', strokeWidth: 3.5, label: 'SHORTEST' };
       }
     }
 
-    if (algorithmMode === 'MST' && activeResult) {
-      const mst = activeResult as MSTResult;
-      if (mst.selectedEdgeIds.includes(edgeId)) {
-        return { stroke: '#8C5A48', strokeDasharray: 'none', strokeWidth: 3, label: 'MST' };
-      }
-    }
-
-    return { stroke: '#BEB5A9', strokeDasharray: '3,3', strokeWidth: 1.5, label: '' };
+    return { stroke: '#475569', strokeDasharray: '3,3', strokeWidth: 1.5, label: '' };
   };
 
   return (

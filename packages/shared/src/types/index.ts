@@ -68,6 +68,41 @@ export interface STPResult {
   topologyRevision: number;
 }
 
+export interface DijkstraRelaxationStep {
+  neighborId: string;
+  edgeId: string;
+  edgeCost: number;
+  priorDistance: number;
+  newCalculatedDistance: number;
+  action:
+    | 'relaxed'
+    | 'rejected_higher_cost'
+    | 'rejected_already_visited'
+    | 'tied_tiebreaker_kept'
+    | 'tied_tiebreaker_swapped';
+  reason: string;
+}
+
+export interface DijkstraStep {
+  stepNumber: number;
+  settledNodeId: string;
+  settledCost: number;
+  unvisitedNodeIds: string[];
+  visitedNodeIds: string[];
+  relaxations: DijkstraRelaxationStep[];
+  tentativeDistances: Record<string, number>;
+  predecessors: Record<string, string | null>;
+}
+
+export interface DijkstraAlternativePath {
+  pathNodeIds: string[];
+  totalCost: number;
+  hopCount: number;
+  status: 'chosen' | 'suboptimal';
+  costDifference: number;
+  rejectionReason: string;
+}
+
 export interface DijkstraResult {
   mode: 'DIJKSTRA';
   sourceId: string;
@@ -79,6 +114,9 @@ export interface DijkstraResult {
   reachable: boolean;
   explanation: string[];
   allDistances: Record<string, number>;
+  predecessors: Record<string, string | null>;
+  steps: DijkstraStep[];
+  alternativePaths: DijkstraAlternativePath[];
   topologyRevision: number;
 }
 

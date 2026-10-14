@@ -50,8 +50,8 @@ export class PacketSimulationEngine {
   private config: PacketEngineConfig;
   private isContinuousRunning = false;
   private isPaused = false;
-  private continuousSourceId = 'gw_1';
-  private continuousDestId = 'ep_2';
+  private continuousSourceId = 'ep_1';
+  private continuousDestId = 'gw_1';
   private continuousAccumulatorMs = 0;
   private nextPacketNumber = 1;
 
@@ -206,7 +206,9 @@ export class PacketSimulationEngine {
       if (this.continuousAccumulatorMs >= intervalMs) {
         this.continuousAccumulatorMs -= intervalMs;
         const computed = defaultRouteProvider(this.continuousSourceId, this.continuousDestId);
-        this.sendPacket(this.continuousSourceId, this.continuousDestId, computed.route, computed.edgeIds);
+        if (computed && computed.route && computed.route.length >= 2) {
+          this.sendPacket(this.continuousSourceId, this.continuousDestId, computed.route, computed.edgeIds);
+        }
       }
     }
 

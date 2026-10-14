@@ -21,7 +21,7 @@ import {
   CheckCircle2,
   RefreshCw
 } from 'lucide-react';
-import { STPResult } from '@nexus/shared';
+import { DijkstraResult } from '@nexus/shared';
 
 export const StudentView: React.FC = () => {
   const {
@@ -52,13 +52,15 @@ export const StudentView: React.FC = () => {
     let portStatus = 'Candidate';
     let isBlocked = false;
 
-    if (algorithmMode === 'STP' && activeResult) {
-      const stp = activeResult as STPResult;
-      const portKey = `${myNode.id}->${neighborId}`;
-      const decision = stp.ports[portKey];
-      if (decision) {
-        portStatus = `${decision.role} (${decision.state})`;
-        isBlocked = decision.state === 'blocking';
+    if (activeResult) {
+      const dij = activeResult as DijkstraResult;
+      const onPath = dij.pathEdgeIds?.includes(e.id);
+      if (onPath) {
+        portStatus = 'On Shortest Path';
+      } else if (e.online) {
+        portStatus = 'Alternative Link';
+      } else {
+        portStatus = 'Link Down';
       }
     } else if (e.online) {
       portStatus = 'Connected';

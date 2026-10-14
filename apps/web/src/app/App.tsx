@@ -116,12 +116,24 @@ export const App: React.FC = () => {
               </button>
             </div>
 
+            {/* Quick reopen button if right panel is hidden */}
+            {!showRightPanel && (
+              <button
+                onClick={() => setShowRightPanel(true)}
+                className="absolute top-14 right-3 z-10 bg-slate-900/90 hover:bg-slate-800 text-cyan-400 border border-slate-700 px-2 py-1 rounded shadow-lg text-[10px] font-mono flex items-center gap-1 transition-all"
+                title="Open Dijkstra Path Justification Panel"
+              >
+                <PanelRightOpen className="w-3.5 h-3.5" />
+                <span>Path Proof</span>
+              </button>
+            )}
+
             {/* Rendering Viewport */}
             {use2DFallback ? <Fallback2DView /> : <NetworkScene />}
           </main>
 
           {/* Collapsible Right Analytical Panel */}
-          {showRightPanel && <RightPanel />}
+          {showRightPanel && <RightPanel onClose={() => setShowRightPanel(false)} />}
         </div>
       ) : (
         /* Mobile Student View */

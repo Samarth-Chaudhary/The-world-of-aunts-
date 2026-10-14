@@ -21,13 +21,15 @@ interface NetworkNode3DProps {
   isSelected: boolean;
   isTarget: boolean;
   isRoot: boolean;
+  hasPeersInRange?: boolean;
 }
 
 export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
   node,
   isSelected,
   isTarget,
-  isRoot
+  isRoot,
+  hasPeersInRange = true
 }) => {
   const meshRef = useRef<THREE.Group>(null);
   const { selectNode, moveNode } = useNetworkStore();
@@ -44,10 +46,11 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
   // Accent color for auras
   const auraColor = useMemo(() => {
     if (!node.online) return '#A78D78';
+    if (!hasPeersInRange && (node.role === 'endpoint' || isSelected)) return '#DC2626';
     if (node.role === 'gateway') return '#6E473B';
     if (node.role === 'endpoint') return isTarget ? '#9E4338' : '#8C7360';
     return '#C07A48';
-  }, [node.role, node.online, isTarget]);
+  }, [node.role, node.online, isTarget, isSelected, hasPeersInRange]);
 
   // Pointer drag handling in XY plane (Z = 0)
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), []);
@@ -140,6 +143,7 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
             isTarget={isTarget}
             hovered={hovered}
             online={node.online}
+            isOutOfRange={!hasPeersInRange}
           />
         ) : (
           // Routers (Wi-Fi Router with dual antennas & glowing button - Image 1)
@@ -156,6 +160,8 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
         <div className={`px-2.5 py-1 rounded text-xs font-mono font-medium whitespace-nowrap shadow select-none flex items-center gap-1.5 transition-all ${
           !node.online
             ? 'bg-slate-900/90 text-slate-500 border border-slate-700 line-through'
+            : !hasPeersInRange
+            ? 'bg-rose-950/95 text-rose-200 border border-rose-500 font-bold scale-105 shadow-rose-900/40 shadow-lg'
             : isSelected
             ? 'bg-cyan-950/95 text-cyan-200 border border-cyan-400 font-bold scale-105'
             : 'bg-slate-900/85 text-slate-200 border border-slate-800'
@@ -174,6 +180,20 @@ export const NetworkNode3D: React.FC<NetworkNode3DProps> = ({
           />
 
           <span>{node.name}</span>
+
+          {/* Out of range warning badge */}
+          {node.online && !hasPeersInRange && (
+            <span className="text-[9px] bg-rose-900/90 text-rose-100 px-1 py-0.5 rounded font-bold border border-rose-400 animate-pulse">
+              OUT OF RANGE
+            </span>
+          )}
+
+          {/* Connected source badge */}
+          {node.online && hasPeersInRange && node.id === 'ep_1' && (
+            <span className="text-[9px] bg-cyan-900/80 text-cyan-200 px-1 py-0.5 rounded font-bold border border-cyan-500">
+              CLIENT
+            </span>
+          )}
 
           {isRoot && (
             <span className="text-[10px] bg-emerald-900/80 text-emerald-300 px-1 py-0.5 rounded font-bold border border-emerald-600">
